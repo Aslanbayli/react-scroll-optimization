@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
@@ -32,9 +33,46 @@ func QueryParam(key string, r *http.Request) *string {
 	return &param
 }
 
-func GetBySearch(db *bun.DB, ctx context.Context, searchText string) (ListWithTotal[Data], error) {
+func ReadPaginationQueryParams(w http.ResponseWriter, r *http.Request) (limit int, offset int, ok bool) {
+	errMap := make(map[string]string)
+
+	limitRaw := QueryParam("limit", r)
+	if limitRaw == nil {
+		limit = 20
+	} else if limitInt, err := strconv.Atoi(*limitRaw); err != nil {
+		errMap["limit"] = "must be an integer between 1 and 100"
+	} else {
+		limit = limitInt
+	}
+
+	offsetRaw := QueryParam("offset", r)
+	if offsetRaw == nil {
+		offset = 0
+	} else if offsetInt, err := strconv.Atoi(*offsetRaw); err != nil {
+		errMap["offset"] = "must be an integer greater than 0"
+	} else {
+		offset = offsetInt
+	}
+
+	if len(errMap) > 0 {
+		return 0, 0, false
+	}
+
+	return limit, offset, true
+}
+
+func GetBySearch(db *bun.DB, ctx context.Context, searchText string, limit, offset int) (ListWithTotal[Data], error) {
 	var data []Data
-	total, err := db.NewSelect().TableExpr("sample_data as s").Where("s.name LIKE ?", "%"+searchText+"%").ScanAndCount(ctx, &data)
+
+	query := db.NewSelect().TableExpr("sample_data as s").Where("s.name LIKE ?", "%"+searchText+"%")
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+
+	total, err := query.ScanAndCount(ctx, &data)
 	if err != nil {
 		return ListWithTotal[Data]{}, fmt.Errorf("GetBySearch: %v", err)
 	}
@@ -52,7 +90,12 @@ func Handler(db *bun.DB, w http.ResponseWriter, r *http.Request) {
 		searchText = *searchTextParam
 	}
 
-	resp, err := GetBySearch(db, r.Context(), searchText)
+	limit, offset, ok := ReadPaginationQueryParams(w, r)
+	if !ok {
+		http.Error(w, "Couldn't read pagination params", http.StatusInternalServerError)
+	}
+
+	resp, err := GetBySearch(db, r.Context(), searchText, limit, offset)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
