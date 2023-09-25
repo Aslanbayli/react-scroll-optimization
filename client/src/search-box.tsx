@@ -4,6 +4,7 @@ import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 import axios from 'axios';
 
+
 function SearchBox() {
     interface Option {
         id: number;
@@ -22,28 +23,34 @@ function SearchBox() {
         hasMore: false,
     });
     const infiniteLoaderRef = useRef<InfiniteLoader | null>(null);
-    const hasMountedRef = useRef(false);
+    // const hasMountedRef = useRef(false);
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const fetchData = async (searchText: string, limit: number, offset: number) => {
-        const response = await axios({
-            method: 'get',
-            url: `http://localhost:8080/search?search_text=${searchText}&limit=${limit}&offset=${offset}`,
-            withCredentials: false,
-        });
-        console.log(response.request.responseURL);
-        return response.data;
+        try {
+            const response = await axios({
+                method: 'get',
+                url: `http://localhost:8080/search?search_text=${searchText}&limit=${limit}&offset=${offset}`,
+                withCredentials: false,
+            });
+            console.log(response.request.responseURL);
+            return response.data;
+        } catch (error) {
+            console.error("API request error:", error);
+            return null;
+        }
     };
 
     const search = async (searchText: string) => {
         setIsLoading(true);
         if (searchText === '') {
             setData({options: [], hasMore: false});
+            setIsLoading(false);
             return;
         }
         const newData = await fetchData(searchText, 10, 0);
         if (newData.data) {
-            setData({options: newData.data, hasMore: newData.data.length > 0});
+            setData({options: newData.data, hasMore: newData.data.length < newData.total});
         } else {
             setData({options: [{id: 0, name: 'No options found'}], hasMore: false});
         }
@@ -55,36 +62,43 @@ function SearchBox() {
         const newData = await fetchData(searchText, 10, data.options.length);
         setData((prevData) => ({
             options: [...prevData.options, ...newData.data],
-            hasMore: newData.data.length > 0,
+            hasMore: newData.data.length + data.options.length < newData.total,
         }));
         setIsLoading(false);
     };
 
     const loadedOptionCount = data.hasMore ? data.options.length + 1 : data.options.length;
-    const loadMoreOptions = isLoading ? () => {} : loadMore;
+    const loadMoreOptions = (isLoading || !data.hasMore) ? () => {} : loadMore;
     const isOptionLoaded = useCallback(
-        (index: number) => !data.hasMore || index < data.options.length,
+        (index: number) => index < data.options.length,
         [data]
     );
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchText(e.target.value);
-
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
         }
-    };
-
-
-    useEffect(() => {
-        if (hasMountedRef.current) {
+        
+        timeoutRef.current = setTimeout(() => {
             if (infiniteLoaderRef.current) {
                 infiniteLoaderRef.current.resetloadMoreItemsCache();
             }
-            timeoutRef.current = setTimeout(() => search(searchText), 400);
-        }
-        hasMountedRef.current = true;
-    }, [searchText]);
+            search(e.target.value);
+        }, 500);
+    };
+
+
+    // useEffect(() => {
+    //     if (hasMountedRef.current) {
+    //         if (infiniteLoaderRef.current) {
+    //             infiniteLoaderRef.current.resetloadMoreItemsCache();
+    //         }
+    //     }
+    //     hasMountedRef.current = true;
+    //     timeoutRef.current = setTimeout(() => search(searchText), 500);
+    // }, [searchText]);
+
 
     return (
         <Stack sx={{ margin: '10% 30%' }}>
