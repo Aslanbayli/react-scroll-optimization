@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { TextInput, Popover, Box, Stack } from '@mantine/core';
+import { TextInput, Popover, Box, Stack , UnstyledButton, Group, Text, ActionIcon } from '@mantine/core';
+import { IconX } from '@tabler/icons-react';
 import { FixedSizeList } from 'react-window';
 import axios from 'axios';
 
@@ -21,6 +22,7 @@ function SearchBox() {
         options: [],
         total: 0,
     });
+    const [selectedOptions, setSelectedOptions] = useState<Option[]>([]);
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const fetchData = async (searchText: string, limit: number, offset: number) => {
@@ -78,6 +80,15 @@ function SearchBox() {
         }
     };
 
+    const handleItemClick = (index: number) => {
+        if (!selectedOptions.find((option) => option.id === data.options[index].id)) {
+            setSelectedOptions((prev) => [...prev, data.options[index]]);
+        }
+    }
+
+    const handleRemove = (id: number) => {
+        setSelectedOptions((prev) => prev.filter((option) => option.id !== id));
+    }
 
     const itemCount = isLoading ? data.options.length + 1 : data.options.length;
     const itemData = isLoading ? [...data.options, {id: 0, name: 'Loading...'}] : data.options;
@@ -91,11 +102,12 @@ function SearchBox() {
                     textAlign: 'center',
                     padding: theme.spacing.xs,
                     borderRadius: theme.radius.md,
-                    fontSize: '0.875rem',
+                    fontSize: theme.fontSizes.sm,
                 })}
             >
-                Get Data
+                Search for Options
             </Box>
+
             <Popover position="bottom">
                 <Popover.Target>
                     <TextInput
@@ -106,29 +118,59 @@ function SearchBox() {
                     />
                 </Popover.Target>
 
-                <Popover.Dropdown>
-                            <FixedSizeList
-                                onItemsRendered={handleItemsRendered}
-                                style={{
-                                    textAlign: 'center',
-                                    fontSize: '0.875rem',
-                                }}
-                                height={300}
-                                width={300}
-                                itemCount={itemCount}
-                                itemSize={45}
-                                itemData={itemData}
+                <Group>
+                    {selectedOptions.length > 0 ? (
+                        selectedOptions.map((option) => (
+                            <Group key={option.id} noWrap 
+                                sx={(theme) => ({
+                                    border: `1px solid ${theme.colors.gray[3]}`,
+                                    borderRadius: theme.radius.md,
+                                    backgroundColor: theme.white,
+                                    padding: theme.spacing.xs,
+                                    fontSize: theme.fontSizes.sm,
+                                })}
                             >
-                                {({ index, style, data }) => (
-                                    <div style={style}>
-                                        {data[index].name === 'Loading...' ? (
-                                            <span>Loading...</span>
-                                        ) : (
-                                            data[index].name
-                                        )}
-                                    </div>
-                                )}
-                            </FixedSizeList>
+                                <Text>{option.id}</Text>
+                                <Text>{option.name}</Text>
+                                <ActionIcon variant='filled' aria-label='close' onClick={() => handleRemove(option.id)}>
+                                    <IconX size={20}/>
+                                </ActionIcon>
+                                
+                            </Group>
+                        ))
+                    ) : null}
+                </Group>
+
+
+                <Popover.Dropdown>
+                    <FixedSizeList
+                        onItemsRendered={handleItemsRendered}
+                        style={{
+                            textAlign: 'center',
+                            fontSize: '0.875rem',
+                        }}
+                        height={300}
+                        width={300}
+                        itemCount={itemCount}
+                        itemSize={45}
+                        itemData={itemData}
+                    >
+                        {({ index, style, data }) => (
+                            <UnstyledButton 
+                                style={style} 
+                                sx={(theme) => ({ 
+                                    cursor: 'pointer', '&:hover': { backgroundColor: theme.colors.gray[3] }, textAlign: 'center', borderRadius: theme.radius.md
+                                })}
+                                onClick={() => handleItemClick(index)}
+                            >
+                                {data[index].name === 'Loading...' ? (
+                                    <span>Loading...</span>
+                                ) : (
+                                    <span>{data[index].name}</span>
+                                )} 
+                            </UnstyledButton>
+                        )}
+                    </FixedSizeList>
                 </Popover.Dropdown>
             </Popover>
         </Stack>
