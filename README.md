@@ -1,10 +1,12 @@
 # Custom React Scroll Optimization
 
 ## Description
-This is a custom React hook that optimizes the scroll event listener for performance. It uses the Intersection Observer API to determine if the user is scrolling up or down and then calls the appropriate callback function. This is useful for implementing infinite scrolling or lazy loading in a React application.
+This is a high-performance React hook that provides an optimized infinite scrolling experience. It features a debounced search bar that waits for the user to finish typing before making the search request, preventing unnecessary API calls. Once the search is complete, the hook leverages lazy loading to render an infinite amount of data seamlessly, without any noticeable delays or lag. This is achieved through a efficient virtualization algorithm that only renders the visible portion of the data, resulting in superior performance even with large datasets. 
+
+https://github.com/Aslanbayli/react-scroll-optimization/assets/48028559/19240c11-8fd2-40ac-9fad-596a4d02ff10
 
 ## How to use
-==Note you need to have Go and Node.js installed on your machine before you proceed== 
+⭐ *Note you need to have Go and Node.js installed on your machine before you proceed*
 1. Clone the repository
 2. Setup a local database
     - This project uses PostgreSQL as the database. The database connection URL is located in the `server/.env` file. Change it to your own database URL.
@@ -24,4 +26,4 @@ This is a custom React hook that optimizes the scroll event listener for perform
         npm install
         npm run dev
         ```
-5. Open your browser and navigate to `http://localhost:5714` to see the app in action
+5. Open your browser and navigate to `http://localhost:5714` to see the app in action 🌐
