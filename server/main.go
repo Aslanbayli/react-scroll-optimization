@@ -5,11 +5,14 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"github.com/joho/godotenv"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
@@ -107,7 +110,15 @@ func Handler(db *bun.DB, w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	sqlDB := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN("postgres://postgres:postgres@localhost:5432/react_scroll_optimization?sslmode=disable")))
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	DB_URL := os.Getenv("DATABASE_URL")
+	PORT := os.Getenv("PORT")
+
+	sqlDB := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(DB_URL)))
 	db := bun.NewDB(sqlDB, pgdialect.New(), bun.WithDiscardUnknownColumns())
 	defer db.Close()
 
@@ -119,5 +130,5 @@ func main() {
 	})
 
 	fmt.Println("Server started...")
-	http.ListenAndServe(":8080", r)
+	http.ListenAndServe(fmt.Sprintf(":%v", PORT), r)
 }
