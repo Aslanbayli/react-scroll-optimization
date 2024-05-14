@@ -3,8 +3,7 @@
 ## Description
 This is a high-performance React hook that provides an optimized infinite scrolling experience. It features a debounced search bar that waits for the user to finish typing before making the search request, preventing unnecessary API calls. Once the search is complete, the hook leverages lazy loading to render an infinite amount of data seamlessly, without any noticeable delays or lag. This is achieved through a efficient virtualization algorithm that only renders the visible portion of the data, resulting in superior performance even with large datasets. 
 
-[![demo-video](https://github.com/Aslanbayli/react-scroll-optimization/assets/48028559/0ec4dad2-8a7a-4860-857c-1d0489ce2a4b)](https://github.com/Aslanbayli/react-scroll-optimization/assets/48028559/19240c11-8fd2-40ac-9fad-596a4d02ff10)
-
+[![demo-video]()](https://github.com/Aslanbayli/react-scroll-optimization/assets/48028559/19240c11-8fd2-40ac-9fad-596a4d02ff10)
 
 ## How to use
 ⭐ *Note you need to have Go and Node.js installed on your machine before you proceed*
